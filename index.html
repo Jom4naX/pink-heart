@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glowing Pink Heart</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      width: 100%;
+      height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="heartCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let width, height, scale;
+    let animationFrame = 0;
+
+    function resizeCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Heart size
+      scale = Math.min(width / 38, height / 34) * 0.9;
+    }
+
+    // Mathematical heart curve
+    function heartPoint(t) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+
+      const y =
+        13 * Math.cos(t)
+        - 5 * Math.cos(2 * t)
+        - 2 * Math.cos(3 * t)
+        - Math.cos(4 * t);
+
+      return { x, y };
+    }
+
+    function drawHeart() {
+      ctx.clearRect(0, 0, width, height);
+
+      const cx = width / 2;
+      const cy = height / 2 - scale * 0.5;
+
+      // Gentle glowing pulse
+      const pulse = 1 + Math.sin(animationFrame * 0.025) * 0.012;
+      const s = scale * pulse;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s, -s);
+
+      // Draw hundreds of fine rays
+      const count = 520;
+
+      for (let i = 0; i < count; i++) {
+        const t = (i / count) * Math.PI * 2;
+        const p = heartPoint(t);
+
+        // Inner point near the vertical glowing center
+        const innerX = 0.06 * Math.sin(t * 3);
+        const innerY = p.y * 0.64;
+
+        const shimmer =
+          0.5 + 0.5 * Math.sin(i * 0.17 + animationFrame * 0.035);
+
+        ctx.beginPath();
+        ctx.moveTo(innerX, innerY);
+        ctx.lineTo(p.x, p.y);
+
+        ctx.strokeStyle =
+          `rgba(255, ${55 + shimmer * 35}, ${125 + shimmer * 75}, ${0.22 + shimmer * 0.48})`;
+
+        ctx.lineWidth = 0.018 + shimmer * 0.012;
+        ctx.stroke();
+      }
+
+      // Soft pink glow in the center
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+
+      const glow = ctx.createRadialGradient(
+        0, 0, 0,
+        0, 0, 3.2
+      );
+
+      glow.addColorStop(0, "rgba(255, 80, 170, 0.95)");
+      glow.addColorStop(0.18, "rgba(255, 35, 135, 0.4)");
+      glow.addColorStop(1, "rgba(255, 0, 100, 0)");
+
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bright vertical beam
+      ctx.shadowColor = "#ff168c";
+      ctx.shadowBlur = 18;
+      ctx.strokeStyle = "rgba(255, 55, 155, 0.95)";
+      ctx.lineWidth = 0.075;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 7.5);
+      ctx.lineTo(0, -13.1);
+      ctx.stroke();
+
+      // Extra bright central core
+      ctx.shadowBlur = 25;
+      ctx.strokeStyle = "rgba(255, 135, 205, 0.95)";
+      ctx.lineWidth = 0.035;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 4);
+      ctx.lineTo(0, -3);
+      ctx.stroke();
+
+      ctx.restore();
+      ctx.restore();
+
+      animationFrame++;
+      requestAnimationFrame(drawHeart);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    resizeCanvas();
+    drawHeart();
+  </script>
+</body>
+</html>
